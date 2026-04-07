@@ -16,13 +16,18 @@ public class DirectoryFileWriter
         if (!Directory.Exists(_directory)) Directory.CreateDirectory(_directory);
     }
 
+    public string BaseDirectory => _directory;
+
     /// <summary>
     /// Atomically writes text content to the target filename (relative name or full path).
     /// </summary>
     public async Task WriteTextAsync(string fileName, string content, CancellationToken ct = default)
     {
         var targetPath = GetFullPath(fileName);
-        var tempPath = Path.Combine(Path.GetDirectoryName(targetPath)!, ".tmp." + Guid.NewGuid().ToString("N"));
+        var targetDir = Path.GetDirectoryName(targetPath) ?? _directory;
+        if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
+
+        var tempPath = Path.Combine(targetDir, ".tmp." + Guid.NewGuid().ToString("N"));
 
         await File.WriteAllTextAsync(tempPath, content, ct).ConfigureAwait(false);
         // Ensure written to disk by opening and flushing
@@ -41,7 +46,10 @@ public class DirectoryFileWriter
     public async Task WriteBytesAsync(string fileName, byte[] bytes, CancellationToken ct = default)
     {
         var targetPath = GetFullPath(fileName);
-        var tempPath = Path.Combine(Path.GetDirectoryName(targetPath)!, ".tmp." + Guid.NewGuid().ToString("N"));
+        var targetDir = Path.GetDirectoryName(targetPath) ?? _directory;
+        if (!Directory.Exists(targetDir)) Directory.CreateDirectory(targetDir);
+
+        var tempPath = Path.Combine(targetDir, ".tmp." + Guid.NewGuid().ToString("N"));
 
         await File.WriteAllBytesAsync(tempPath, bytes, ct).ConfigureAwait(false);
         using (var fs = new FileStream(tempPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.WriteThrough))
@@ -58,4 +66,3 @@ public class DirectoryFileWriter
         return Path.Combine(_directory, fileName);
     }
 }
-

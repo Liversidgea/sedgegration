@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sedgegration")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a840403cf1ca832ad279753501d03c76f6bc1a7b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+709f55050ca05e77cb5585f2802990848e8d08bd")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sedgegration")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sedgegration")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

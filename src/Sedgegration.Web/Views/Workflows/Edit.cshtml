@@ -56,25 +56,7 @@
 
                         <!-- Step config area -->
                         <div class="row mt-3 step-config" data-step-index="@i" style="display:none;">
-                            <div class="col-md-4">
-                                <label class="form-label">Filename</label>
-                                <input name="Steps[@i].Config[filename]" class="form-control" value="@(Model.Steps[i].Config != null && Model.Steps[i].Config.ContainsKey("filename") ? Model.Steps[i].Config["filename"].ToString() : string.Empty)" />
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Source</label>
-                                <select name="Steps[@i].Config[source]" class="form-select">
-                                    <option value="raw">raw</option>
-                                    <option value="response">response</option>
-                                    <option value="metadata:Header.SomeKey">metadata:Header.SomeKey</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">Encoding</label>
-                                <select name="Steps[@i].Config[encoding]" class="form-select">
-                                    <option value="utf8">utf8</option>
-                                    <option value="base64">base64</option>
-                                </select>
-                            </div>
+                            @Html.Partial("_WriteFileStepConfig", null, new ViewDataDictionary(ViewData) { { "index", i }, { "config", Model.Steps[i].Config ?? new Dictionary<string, object>() } })
                         </div>
 
                     </div>

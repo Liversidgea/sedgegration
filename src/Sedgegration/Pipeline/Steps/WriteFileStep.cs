@@ -92,7 +92,40 @@ public class WriteFileStep : IPayloadStep
 
             // Determine encoding option
             var encoding = GetConfigString("encoding")?.ToLowerInvariant() ?? "utf8";
-            var targetFile = filename;
+
+            // Determine target directory (config 'directory' may be relative or absolute)
+            var dirCfg = GetConfigString("directory");
+            string targetFile;
+            if (!string.IsNullOrWhiteSpace(dirCfg))
+            {
+                string candidateDir;
+                if (Path.IsPathRooted(dirCfg))
+                {
+                    candidateDir = dirCfg;
+                }
+                else
+                {
+                    // Relative: resolve under writer base directory
+                    candidateDir = Path.Combine(_writer.BaseDirectory, dirCfg);
+                }
+
+                // Normalize and ensure candidate is inside writer base dir when given as relative
+                var fullCandidate = Path.GetFullPath(candidateDir);
+                var baseDirFull = Path.GetFullPath(_writer.BaseDirectory);
+                if (!fullCandidate.StartsWith(baseDirFull, StringComparison.OrdinalIgnoreCase) && !Path.IsPathRooted(dirCfg))
+                {
+                    // Prevent directory traversal out of base dir when relative path provided
+                    context.Errors.Add("WriteFile: directory traversal detected or invalid directory");
+                    return;
+                }
+
+                // Use Path.Combine of the resolved directory and filename
+                targetFile = Path.Combine(fullCandidate, filename);
+            }
+            else
+            {
+                targetFile = filename;
+            }
 
             if (encoding == "base64")
             {

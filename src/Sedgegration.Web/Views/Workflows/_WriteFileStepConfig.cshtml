@@ -1,0 +1,93 @@
+﻿@{
+    var index = ViewData["index"] as int? ?? 0;
+    var cfg = ViewData["config"] as Dictionary<string, object> ?? new();
+    string get(string k)
+    {
+        if (!cfg.TryGetValue(k, out var v) || v is null) return string.Empty;
+        if (v is System.Text.Json.JsonElement je) return je.ValueKind == System.Text.Json.JsonValueKind.String ? je.GetString() ?? string.Empty : je.ToString();
+        return v.ToString() ?? string.Empty;
+    }
+
+    // Precompute attribute names and values to avoid inline C# in attributes
+    var namePrefix = $"Steps[{index}].Config";
+    var filenameName = namePrefix + "[filename]";
+    var directoryName = namePrefix + "[directory]";
+    var sourceName = namePrefix + "[source]";
+    var encodingName = namePrefix + "[encoding]";
+    var batchEnabledName = namePrefix + "[batchEnabled]";
+    var batchSizeName = namePrefix + "[batchSize]";
+    var batchIntervalName = namePrefix + "[batchIntervalSeconds]";
+
+    var filenameValue = System.Net.WebUtility.HtmlEncode(get("filename"));
+    var directoryValue = System.Net.WebUtility.HtmlEncode(get("directory"));
+    var sourceValue = get("source");
+    var encodingValue = get("encoding");
+    var batchEnabledValue = get("batchEnabled");
+    var batchSizeValue = System.Net.WebUtility.HtmlEncode(get("batchSize"));
+    var batchIntervalValue = System.Net.WebUtility.HtmlEncode(get("batchIntervalSeconds"));
+
+    string Option(string val, string display, bool selected) => $"<option value=\"{System.Net.WebUtility.HtmlEncode(val)}\"{(selected ? " selected" : string.Empty)}>{System.Net.WebUtility.HtmlEncode(display)}</option>";
+
+    var sourceOptions = new System.Text.StringBuilder();
+    sourceOptions.Append(Option("raw", "raw", string.Equals(sourceValue, "raw", StringComparison.OrdinalIgnoreCase)));
+    sourceOptions.Append(Option("response", "response", string.Equals(sourceValue, "response", StringComparison.OrdinalIgnoreCase)));
+    sourceOptions.Append(Option("metadata:Header.SomeKey", "metadata:Header.SomeKey", sourceValue?.StartsWith("metadata:", StringComparison.OrdinalIgnoreCase) == true));
+
+    var encodingOptions = new System.Text.StringBuilder();
+    encodingOptions.Append(Option("utf8", "utf8", string.Equals(encodingValue, "utf8", StringComparison.OrdinalIgnoreCase)));
+    encodingOptions.Append(Option("base64", "base64", string.Equals(encodingValue, "base64", StringComparison.OrdinalIgnoreCase)));
+
+    // batch checkbox checked state
+    var batchCheckedAttr = string.Equals(batchEnabledValue, "true", StringComparison.OrdinalIgnoreCase) ? " checked" : string.Empty;
+    var batchSizeFinal = string.IsNullOrWhiteSpace(batchSizeValue) ? "100" : batchSizeValue;
+    var batchIntervalFinal = string.IsNullOrWhiteSpace(batchIntervalValue) ? "60" : batchIntervalValue;
+
+    // Build HTML snippets without inline Razor in attributes
+    var filenameHtml = $"<input name=\"{System.Net.WebUtility.HtmlEncode(filenameName)}\" class=\"form-control\" value=\"{filenameValue}\" placeholder=\"request-{{timestamp}}.txt\" />";
+    var directoryHtml = $"<input name=\"{System.Net.WebUtility.HtmlEncode(directoryName)}\" class=\"form-control\" value=\"{directoryValue}\" placeholder=\"relative or absolute path\" />";
+    var sourceSelectHtml = $"<select name=\"{System.Net.WebUtility.HtmlEncode(sourceName)}\" class=\"form-select\">{sourceOptions}</select>";
+    var encodingSelectHtml = $"<select name=\"{System.Net.WebUtility.HtmlEncode(encodingName)}\" class=\"form-select\">{encodingOptions}</select>";
+    var batchHiddenHtml = $"<input type=\"hidden\" name=\"{System.Net.WebUtility.HtmlEncode(batchEnabledName)}\" value=\"false\" />";
+    var batchCheckboxHtml = $"<input class=\"form-check-input\" type=\"checkbox\" value=\"true\" id=\"batchEnabled_{index}\" name=\"{System.Net.WebUtility.HtmlEncode(batchEnabledName)}\"{batchCheckedAttr} />";
+    var batchSizeHtml = $"<input name=\"{System.Net.WebUtility.HtmlEncode(batchSizeName)}\" type=\"number\" min=\"1\" class=\"form-control\" value=\"{batchSizeFinal}\" />";
+    var batchIntervalHtml = $"<input name=\"{System.Net.WebUtility.HtmlEncode(batchIntervalName)}\" type=\"number\" min=\"1\" class=\"form-control\" value=\"{batchIntervalFinal}\" />";
+}
+
+<div class="row mt-3 step-config" data-step-index="@index" style="display:none;">
+    <div class="col-md-4">
+        <label class="form-label">Filename</label>
+        @Html.Raw(filenameHtml)
+        <div class="form-text">Tokens: {id}, {timestamp}, {protocol}</div>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Directory (optional)</label>
+        @Html.Raw(directoryHtml)
+        <div class="form-text">Optional override directory; defaults to configured outputs directory.</div>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Source</label>
+        @Html.Raw(sourceSelectHtml)
+    </div>
+    <div class="col-md-1">
+        <label class="form-label">Encoding</label>
+        @Html.Raw(encodingSelectHtml)
+    </div>
+
+    <div class="col-12 mt-3">
+        <div class="form-check">
+            @Html.Raw(batchHiddenHtml)
+            @Html.Raw(batchCheckboxHtml)
+            <label class="form-check-label" for="batchEnabled_@index">Enable batch processing</label>
+        </div>
+    </div>
+
+    <div class="col-md-3 mt-2">
+        <label class="form-label">Batch size</label>
+        @Html.Raw(batchSizeHtml)
+    </div>
+    <div class="col-md-3 mt-2">
+        <label class="form-label">Batch interval (sec)</label>
+        @Html.Raw(batchIntervalHtml)
+    </div>
+</div>
+
