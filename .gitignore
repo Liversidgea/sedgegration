@@ -1,0 +1,65 @@
+﻿# Ignore build outputs
+**/bin/
+**/obj/
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.DotSettings.user
+*.DotSettings.user
+*.VC.db
+
+# Rider
+.idea/
+*.iml
+.idea/**
+
+# VS Code
+.vscode/
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+project.lock.json
+
+# Test results
+TestResults/
+*.trx
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Packages
+*.nupkg
+*.snupkg
+
+# Rider and JetBrains
+.idea/
+*.sln.iml
+
+# Resharper
+_ReSharper*/
+*.ReSharper*
+
+# Others
+*.db
+*.sqlite
+
+# Local application settings
+local.settings.json
+
+# Ignore user-specific JetBrains settings that may exist
+*.DotSettings.user
+
