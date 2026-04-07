@@ -40,7 +40,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <label class="form-label">Step Type</label>
-                                <select name="Steps[@i].StepType" class="form-select">
+                                <select name="Steps[@i].StepType" class="form-select step-type-select">
                                     @foreach (var s in steps)
                                     {
                                         <option value="@s" selected="@(Model.Steps[i].StepType == s)">@s</option>
@@ -53,6 +53,30 @@
                                        value="@(Model.Steps[i].Order ?? i)" />
                             </div>
                         </div>
+
+                        <!-- Step config area -->
+                        <div class="row mt-3 step-config" data-step-index="@i" style="display:none;">
+                            <div class="col-md-4">
+                                <label class="form-label">Filename</label>
+                                <input name="Steps[@i].Config[filename]" class="form-control" value="@(Model.Steps[i].Config != null && Model.Steps[i].Config.ContainsKey("filename") ? Model.Steps[i].Config["filename"].ToString() : string.Empty)" />
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Source</label>
+                                <select name="Steps[@i].Config[source]" class="form-select">
+                                    <option value="raw">raw</option>
+                                    <option value="response">response</option>
+                                    <option value="metadata:Header.SomeKey">metadata:Header.SomeKey</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Encoding</label>
+                                <select name="Steps[@i].Config[encoding]" class="form-select">
+                                    <option value="utf8">utf8</option>
+                                    <option value="base64">base64</option>
+                                </select>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             }
@@ -78,11 +102,57 @@
         }).join('');
         var html = '<div class="card mb-2 step-row"><div class="card-body"><div class="row">'
             + '<div class="col-md-4"><label class="form-label">Step Type</label>'
-            + '<select name="Steps[' + stepIndex + '].StepType" class="form-select">' + options + '</select></div>'
+            + '<select name="Steps[' + stepIndex + '].StepType" class="form-select step-type-select">' + options + '</select></div>'
             + '<div class="col-md-2"><label class="form-label">Order</label>'
             + '<input name="Steps[' + stepIndex + '].Order" type="number" class="form-control" value="' + stepIndex + '" /></div>'
-            + '</div></div></div>';
+            + '</div>'
+            + '<div class="row mt-3 step-config" data-step-index="' + stepIndex + '" style="display:none;">'
+            + '<div class="col-md-4"><label class="form-label">Filename</label>'
+            + '<input name="Steps[' + stepIndex + '].Config[filename]" class="form-control" /></div>'
+            + '<div class="col-md-3"><label class="form-label">Source</label>'
+            + '<select name="Steps[' + stepIndex + '].Config[source]" class="form-select">'
+            + '<option value="raw">raw</option><option value="response">response</option>'
+            + '</select></div>'
+            + '<div class="col-md-2"><label class="form-label">Encoding</label>'
+            + '<select name="Steps[' + stepIndex + '].Config[encoding]" class="form-select">'
+            + '<option value="utf8">utf8</option><option value="base64">base64</option>'
+            + '</select></div></div>'
+            + '</div></div>';
         container.insertAdjacentHTML('beforeend', html);
+        attachStepTypeHandlers();
         stepIndex++;
+    }
+
+    function attachStepTypeHandlers() {
+        document.querySelectorAll('.step-type-select').forEach(function(sel) {
+            sel.onchange = function(e) {
+                var card = e.target.closest('.card');
+                var index = Array.from(document.querySelectorAll('.card')).indexOf(card);
+                var config = card.querySelector('.step-config');
+                if (!config) return;
+                if (e.target.value === 'WriteFile') config.style.display = ''; else config.style.display = 'none';
+            };
+            // trigger initial visibility
+            var ev = new Event('change'); sel.dispatchEvent(ev);
+        });
+    }
+
+    // attach handlers for initial rows
+    attachStepTypeHandlers();
+
+    // Listen for runtime-registered steps and update UI
+    if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('steps');
+        bc.onmessage = (ev) => {
+            if (!ev.data || ev.data.type !== 'registered') return;
+            const name = ev.data.name;
+            if (!stepTypes.includes(name)) {
+                stepTypes.push(name);
+                // Add to existing selects
+                document.querySelectorAll('.step-type-select').forEach(sel => {
+                    const opt = document.createElement('option'); opt.value = name; opt.text = name; sel.appendChild(opt);
+                });
+            }
+        };
     }
 </script>

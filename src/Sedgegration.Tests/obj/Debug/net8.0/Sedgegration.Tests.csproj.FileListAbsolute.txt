@@ -128,3 +128,4 @@ c:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\Sedgegration.Tests.p
 c:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\Sedgegration.Tests.genruntimeconfig.cache
 c:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\ref\Sedgegration.Tests.dll
 C:\git\Sedgegration\src\Sedgegration.Tests\bin\Debug\net8.0\Sedgegration.exe
+C:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\Sedgegration.Tests.sourcelink.json

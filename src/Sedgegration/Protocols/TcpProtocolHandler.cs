@@ -7,7 +7,7 @@ using Sedgegration.Workflows;
 
 namespace Sedgegration.Protocols;
 
-public class TcpProtocolHandler(WorkflowEngine engine, ILogger<TcpProtocolHandler> logger) : IProtocolHandler
+public class TcpProtocolHandler(WorkflowEngine engine, ILogger<TcpProtocolHandler> logger, Sedgegration.Requests.IRequestQueue requestQueue) : IProtocolHandler
 {
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
@@ -89,17 +89,31 @@ public class TcpProtocolHandler(WorkflowEngine engine, ILogger<TcpProtocolHandle
                     ["RemoteEndpoint"] = client.Client.RemoteEndPoint?.ToString() ?? "unknown"
                 };
 
-                // Determine workflow key to use (override or remote endpoint)
+                // Determine workflow key and process
                 var workflowKey = _workflowKey ?? metadata["RemoteEndpoint"]?.ToString() ?? string.Empty;
 
                 var results = await engine.ProcessAsync(workflowKey, ms.ToArray(), metadata, ct);
 
                 var allValid = results.TrueForAll(r => r.IsValid);
-                var response = allValid
+                var responseBytes = allValid
                     ? "OK"u8.ToArray()
                     : Encoding.UTF8.GetBytes($"ERROR: {string.Join("; ", results.SelectMany(r => r.Errors))}");
 
-                await stream.WriteAsync(response, ct);
+                // Capture response as string for persistence (UTF-8)
+                var responseText = System.Text.Encoding.UTF8.GetString(responseBytes);
+
+                // Persist the request with response
+                var persisted = new Sedgegration.Requests.PersistedRequest
+                {
+                    Protocol = "TCP",
+                    Path = workflowKey,
+                    RawData = ms.ToArray(),
+                    Metadata = metadata,
+                    Response = responseText
+                };
+                await requestQueue.EnqueueAsync(persisted, ct);
+
+                await stream.WriteAsync(responseBytes, ct);
             }
             catch (Exception ex)
             {

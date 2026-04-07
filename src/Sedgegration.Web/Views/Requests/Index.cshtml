@@ -1,0 +1,38 @@
+﻿@model List<Sedgegration.Web.Models.RequestViewModel>
+@{
+    ViewData["Title"] = "Requests";
+}
+
+<h1>Requests</h1>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No requests persisted.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Received</th>
+                <th>Protocol</th>
+                <th>Path</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.ReceivedAt.ToString("s")</td>
+                    <td>@r.Protocol</td>
+                    <td>@r.Path</td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary">Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+

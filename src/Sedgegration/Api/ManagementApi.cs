@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Routing;
 using Sedgegration.Models;
 using Sedgegration.Pipeline;
 using Sedgegration.Protocols;
+using Sedgegration.Requests;
 using Sedgegration.Workflows;
+using Sedgegration.IO;
+using Sedgegration.Pipeline.Steps;
 
 namespace Sedgegration.Api;
 
@@ -13,12 +16,16 @@ namespace Sedgegration.Api;
 /// </summary>
 public static class ManagementApi
 {
+    // DTO for registering steps at runtime
+    public record RegisterStepRequest(string Name);
+
     public static void MapManagementEndpoints(this IEndpointRouteBuilder app)
     {
         MapHealthEndpoint(app);
         MapWorkflowEndpoints(app);
         MapProtocolEndpoints(app);
         MapStepEndpoints(app);
+        MapRequestEndpoints(app);
     }
 
     private static void MapHealthEndpoint(IEndpointRouteBuilder app)
@@ -226,6 +233,54 @@ public static class ManagementApi
         app.MapGet("/api/steps", (StepRegistry registry) =>
             Results.Ok(registry.GetRegisteredSteps()))
             .WithTags("Steps");
+
+        // Register a step implementation at runtime (supports WriteFile)
+        app.MapPost("/api/steps/register", async (RegisterStepRequest req, StepRegistry registry, DirectoryFileWriter writer, ILoggerFactory loggerFactory) =>
+        {
+            if (string.IsNullOrWhiteSpace(req?.Name))
+                return Results.BadRequest(new { error = "Name is required" });
+
+            var name = req.Name;
+            if (registry.Contains(name))
+                return Results.Conflict(new { error = "Step already registered" });
+
+            if (string.Equals(name, "WriteFile", StringComparison.OrdinalIgnoreCase))
+            {
+                registry.Register("WriteFile", cfg => new WriteFileStep(cfg, writer, loggerFactory.CreateLogger<WriteFileStep>()));
+                return Results.Created($"/api/steps/{Uri.EscapeDataString(name)}", new { name });
+            }
+
+            return Results.BadRequest(new { error = "Unknown or unsupported step type" });
+        });
+    }
+
+    private static void MapRequestEndpoints(IEndpointRouteBuilder app)
+    {
+        var api = app.MapGroup("/api/requests").WithTags("Requests");
+
+        api.MapGet("/", async (IRequestStore store) =>
+            Results.Ok(await store.GetAllAsync()));
+
+        api.MapGet("/{id}", async (string id, IRequestStore store) =>
+        {
+            var req = await store.GetAsync(id);
+            return req is null ? Results.NotFound() : Results.Ok(req);
+        });
+
+        api.MapPost("/{id}/replay", async (string id, IRequestStore store, WorkflowEngine engine) =>
+        {
+            var req = await store.GetAsync(id);
+            if (req is null) return Results.NotFound(new { error = "Request not found" });
+
+            // Ensure metadata dictionary exists
+            var metadata = req.Metadata ?? new Dictionary<string, object>();
+            metadata["ReplayedAt"] = DateTime.UtcNow;
+
+            var results = await engine.ProcessAsync(req.Path ?? string.Empty, req.RawData ?? Array.Empty<byte>(), metadata, CancellationToken.None);
+
+            var anyResponse = results.Any(r => r.Metadata.ContainsKey("Response"));
+            return Results.Ok(new { workflows = results.Count, anyResponse });
+        });
     }
 
     // Simple route validation: allow empty (handler default) or a path starting with '/', no spaces, no '..'

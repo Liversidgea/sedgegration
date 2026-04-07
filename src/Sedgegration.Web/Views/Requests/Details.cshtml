@@ -1,0 +1,40 @@
+﻿@model Sedgegration.Web.Models.RequestViewModel
+@{
+    ViewData["Title"] = "Request Details";
+}
+
+<h1>Request @Model.Id</h1>
+<dl class="row">
+    <dt class="col-sm-2">Received</dt>
+    <dd class="col-sm-10">@Model.ReceivedAt.ToString("u")</dd>
+
+    <dt class="col-sm-2">Protocol</dt>
+    <dd class="col-sm-10">@Model.Protocol</dd>
+
+    <dt class="col-sm-2">Path</dt>
+    <dd class="col-sm-10">@Model.Path</dd>
+
+    <dt class="col-sm-2">Metadata</dt>
+    <dd class="col-sm-10">
+        <pre>@System.Text.Json.JsonSerializer.Serialize(Model.Metadata, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre>
+    </dd>
+
+    <dt class="col-sm-2">Raw</dt>
+    <dd class="col-sm-10">
+        <pre>@(System.Text.Encoding.UTF8.GetString(Model.RawData))</pre>
+    </dd>
+
+    <dt class="col-sm-2">Response</dt>
+    <dd class="col-sm-10">
+        @if (Model.Response is not null)
+        {
+            <pre>@System.Text.Json.JsonSerializer.Serialize(Model.Response, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre>
+        }
+        else
+        {
+            <span class="text-muted">(no response)</span>
+        }
+    </dd>
+</dl>
+
+<a asp-action="Index" class="btn btn-secondary">Back</a>

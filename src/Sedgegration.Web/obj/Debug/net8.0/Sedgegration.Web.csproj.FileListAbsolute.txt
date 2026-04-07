@@ -28,3 +28,4 @@ C:\git\sedgegration\src\Sedgegration.Web\obj\Debug\net8.0\Sedgegration.Web.pdb
 C:\git\sedgegration\src\Sedgegration.Web\obj\Debug\net8.0\Sedgegration.Web.genruntimeconfig.cache
 C:\git\sedgegration\src\Sedgegration.Web\obj\Debug\net8.0\ref\Sedgegration.Web.dll
 C:\git\Sedgegration\src\Sedgegration.Web\bin\Debug\net8.0\Sedgegration.Web.exe
+C:\git\Sedgegration\src\Sedgegration.Web\obj\Debug\net8.0\Sedgegration.Web.sourcelink.json

@@ -1,0 +1,57 @@
+﻿@model IReadOnlyList<string>
+@{
+    ViewData["Title"] = "Steps";
+}
+
+<h1>Steps</h1>
+
+<p>Available step types:</p>
+<ul id="steps-list">
+@foreach(var s in Model) { <li>@s</li> }
+</ul>
+
+<h3>Register new step</h3>
+<div class="row g-2 align-items-center">
+    <div class="col-auto">
+        <input id="stepName" class="form-control" placeholder="WriteFile" />
+    </div>
+    <div class="col-auto">
+        <button id="registerBtn" class="btn btn-primary">Register</button>
+    </div>
+    <div class="col-auto">
+        <span id="registerStatus" class="text-muted"></span>
+    </div>
+</div>
+
+<script>
+    const btn = document.getElementById('registerBtn');
+    const nameInput = document.getElementById('stepName');
+    const status = document.getElementById('registerStatus');
+    const list = document.getElementById('steps-list');
+    const bc = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('steps') : null;
+
+    btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const name = nameInput.value.trim();
+        if (!name) { status.textContent = 'Enter a step name'; status.className = 'text-danger'; return; }
+        status.textContent = 'Registering...'; status.className = 'text-muted';
+        try {
+            const resp = await fetch('/Steps/Register', {
+                method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ name })
+            });
+            if (!resp.ok) {
+                const txt = await resp.text();
+                status.textContent = 'Error: ' + txt; status.className = 'text-danger';
+                return;
+            }
+            // success
+            const li = document.createElement('li'); li.textContent = name; list.appendChild(li);
+            status.textContent = 'Registered'; status.className = 'text-success';
+            nameInput.value = '';
+            if (bc) bc.postMessage({ type: 'registered', name });
+        } catch (err) {
+            status.textContent = 'Network error'; status.className = 'text-danger';
+        }
+    });
+</script>

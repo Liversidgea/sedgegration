@@ -7,7 +7,7 @@ using Sedgegration.Workflows;
 
 namespace Sedgegration.Protocols;
 
-public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHandler> logger) : IProtocolHandler
+public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHandler> logger, Sedgegration.Requests.IRequestQueue requestQueue) : IProtocolHandler
 {
     private WebApplication? _app;
     private string _route = "/ingest";
@@ -31,24 +31,13 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
         if (config.Options != null && config.Options.TryGetValue("Workflow", out var wf) && wf is not null)
             _workflowKey = wf.ToString();
 
-        ConfigureRoutes(_app);
+        ConfigureRoutes(_app, requestQueue);
 
         logger.LogInformation("HTTP listener starting on port {Port} (route: {Route})", config.Port, _route);
         await _app.StartAsync(ct);
     }
 
-    public async Task StopAsync(CancellationToken ct)
-    {
-        if (_app is not null)
-        {
-            await _app.StopAsync(ct);
-            await _app.DisposeAsync();
-            _app = null;
-        }
-        logger.LogInformation("HTTP listener stopped");
-    }
-
-    private void ConfigureRoutes(WebApplication app)
+    private void ConfigureRoutes(WebApplication app, Sedgegration.Requests.IRequestQueue requestQueue)
     {
         // Map ingest route from configuration
         app.MapPost(_route, async (HttpContext http, CancellationToken ct) =>
@@ -75,14 +64,25 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
                 metadata[$"Header.{h.Key}"] = h.Value.ToString();
             }
 
-            // Determine which workflow key to use: explicit override from protocol config, else request path
             var workflowKey = _workflowKey ?? (metadata.TryGetValue("Path", out var p) ? p?.ToString() ?? string.Empty : string.Empty);
 
             var results = await engine.ProcessAsync(workflowKey, ms.ToArray(), metadata, ct);
 
+            object? capturedResponse = null;
+
             if (results.Count == 0)
             {
-                // No workflow matched or it is disabled
+                // Persist the request with no response
+                var persistedNotFound = new Sedgegration.Requests.PersistedRequest
+                {
+                    Protocol = "HTTP",
+                    Path = workflowKey,
+                    RawData = ms.ToArray(),
+                    Metadata = metadata,
+                    Response = null
+                };
+                await requestQueue.EnqueueAsync(persistedNotFound, ct);
+
                 return Results.NotFound(new { error = $"No workflow matches path '{workflowKey}'" });
             }
 
@@ -90,7 +90,20 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
             var responseContext = results.FirstOrDefault(r => r.Metadata.ContainsKey("Response"));
             if (responseContext is not null)
             {
-                var resp = responseContext.Metadata["Response"]!;
+                capturedResponse = responseContext.Metadata["Response"]!;
+
+                var resp = capturedResponse;
+                // Persist the request with response
+                var persisted = new Sedgegration.Requests.PersistedRequest
+                {
+                    Protocol = "HTTP",
+                    Path = workflowKey,
+                    RawData = ms.ToArray(),
+                    Metadata = metadata,
+                    Response = resp
+                };
+                await requestQueue.EnqueueAsync(persisted, ct);
+
                 return resp switch
                 {
                     System.Text.Json.JsonElement je => Results.Json(je),
@@ -99,7 +112,19 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
                 };
             }
 
+            // No explicit response in workflow; persist and return OK/failure based on validity
             var allValid = results.TrueForAll(r => r.IsValid);
+
+            var persistedNoResp = new Sedgegration.Requests.PersistedRequest
+            {
+                Protocol = "HTTP",
+                Path = workflowKey,
+                RawData = ms.ToArray(),
+                Metadata = metadata,
+                Response = null
+            };
+            await requestQueue.EnqueueAsync(persistedNoResp, ct);
+
             return allValid
                 ? Results.Ok(new { status = "processed", workflows = results.Count })
                 : Results.BadRequest(new
@@ -110,5 +135,16 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
         });
 
         app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+    }
+
+    public async Task StopAsync(CancellationToken ct)
+    {
+        if (_app is not null)
+        {
+            await _app.StopAsync(ct);
+            await _app.DisposeAsync();
+            _app = null;
+        }
+        logger.LogInformation("HTTP listener stopped");
     }
 }

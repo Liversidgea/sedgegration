@@ -181,4 +181,30 @@ public class ManagementApiClient(HttpClient http)
             "/api/steps", ct);
         return list ?? [];
     }
+
+    // ── Requests ───────────────────────────────────────────
+
+    public async Task<IReadOnlyList<RequestViewModel>> GetRequestsAsync(CancellationToken ct = default)
+    {
+        var list = await http.GetFromJsonAsync<List<RequestViewModel>>("/api/requests", ct);
+        return list ?? [];
+    }
+
+    public async Task<RequestViewModel?> GetRequestAsync(string id, CancellationToken ct = default)
+    {
+        var response = await http.GetAsync($"/api/requests/{Uri.EscapeDataString(id)}", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound) return null;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<RequestViewModel>(cancellationToken: ct);
+    }
+
+    public async Task RegisterStepAsync(string name, CancellationToken ct = default)
+    {
+        var response = await http.PostAsJsonAsync("/api/steps/register", new { Name = name }, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException($"Failed to register step: {content}");
+        }
+    }
 }

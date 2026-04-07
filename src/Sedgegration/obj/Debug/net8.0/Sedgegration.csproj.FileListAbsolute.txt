@@ -51,3 +51,4 @@ C:\git\sedgegration\src\Sedgegration\obj\Debug\net8.0\Sedgegration.pdb
 C:\git\sedgegration\src\Sedgegration\obj\Debug\net8.0\Sedgegration.genruntimeconfig.cache
 C:\git\sedgegration\src\Sedgegration\obj\Debug\net8.0\ref\Sedgegration.dll
 C:\git\Sedgegration\src\Sedgegration\bin\Debug\net8.0\Sedgegration.exe
+C:\git\Sedgegration\src\Sedgegration\obj\Debug\net8.0\Sedgegration.sourcelink.json

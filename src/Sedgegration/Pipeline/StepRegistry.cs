@@ -20,7 +20,7 @@ public class StepRegistry
             factory(config);
     }
 
-    public IReadOnlyList<string> GetRegisteredSteps() => _factories.Keys.ToList();
+    public IReadOnlyList<string> GetRegisteredSteps() => _factories.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
 
     public bool Contains(string name) => _factories.ContainsKey(name);
 }

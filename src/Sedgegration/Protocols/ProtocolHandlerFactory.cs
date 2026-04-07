@@ -6,7 +6,7 @@ namespace Sedgegration.Protocols;
 /// <summary>
 /// Resolves a protocol type string (e.g. "http", "tcp") to a handler factory function.
 /// </summary>
-public class ProtocolHandlerFactory(WorkflowEngine engine, ILoggerFactory loggerFactory)
+public class ProtocolHandlerFactory(WorkflowEngine engine, ILoggerFactory loggerFactory, Sedgegration.Requests.IRequestQueue requestQueue)
 {
     private static readonly HashSet<string> SupportedTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -20,8 +20,8 @@ public class ProtocolHandlerFactory(WorkflowEngine engine, ILoggerFactory logger
     {
         return type.ToLowerInvariant() switch
         {
-            "http" => () => new HttpProtocolHandler(engine, loggerFactory.CreateLogger<HttpProtocolHandler>()),
-            "tcp" => () => new TcpProtocolHandler(engine, loggerFactory.CreateLogger<TcpProtocolHandler>()),
+            "http" => () => new HttpProtocolHandler(engine, loggerFactory.CreateLogger<HttpProtocolHandler>(), requestQueue),
+            "tcp" => () => new TcpProtocolHandler(engine, loggerFactory.CreateLogger<TcpProtocolHandler>(), requestQueue),
             _ => throw new ArgumentException($"Unknown protocol type: {type}")
         };
     }
