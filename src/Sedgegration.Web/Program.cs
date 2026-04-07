@@ -10,7 +10,7 @@ builder.Services.AddHttpClient<ManagementApiClient>(http =>
         ?? "http://localhost:5000";
     http.BaseAddress = new Uri(baseAddress);
 });
-
+//testing
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
