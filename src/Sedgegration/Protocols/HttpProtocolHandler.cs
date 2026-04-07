@@ -11,6 +11,7 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
 {
     private WebApplication? _app;
     private string _route = "/ingest";
+    private string? _workflowKey;
 
     public string Name => "HTTP";
     public bool IsRunning => _app is not null;
@@ -25,6 +26,10 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
 
         // Prefer route from config, fall back to default
         _route = string.IsNullOrWhiteSpace(config.Route) ? "/ingest" : config.Route;
+
+        // Capture any workflow override supplied by the protocol config
+        if (config.Options != null && config.Options.TryGetValue("Workflow", out var wf) && wf is not null)
+            _workflowKey = wf.ToString();
 
         ConfigureRoutes(_app);
 
@@ -70,7 +75,16 @@ public class HttpProtocolHandler(WorkflowEngine engine, ILogger<HttpProtocolHand
                 metadata[$"Header.{h.Key}"] = h.Value.ToString();
             }
 
-            var results = await engine.ProcessAsync("HTTP", ms.ToArray(), metadata, ct);
+            // Determine which workflow key to use: explicit override from protocol config, else request path
+            var workflowKey = _workflowKey ?? (metadata.TryGetValue("Path", out var p) ? p?.ToString() ?? string.Empty : string.Empty);
+
+            var results = await engine.ProcessAsync(workflowKey, ms.ToArray(), metadata, ct);
+
+            if (results.Count == 0)
+            {
+                // No workflow matched or it is disabled
+                return Results.NotFound(new { error = $"No workflow matches path '{workflowKey}'" });
+            }
 
             // If any workflow produced a response, return the first one found
             var responseContext = results.FirstOrDefault(r => r.Metadata.ContainsKey("Response"));

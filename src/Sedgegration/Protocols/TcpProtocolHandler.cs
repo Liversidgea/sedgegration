@@ -12,6 +12,7 @@ public class TcpProtocolHandler(WorkflowEngine engine, ILogger<TcpProtocolHandle
     private TcpListener? _listener;
     private CancellationTokenSource? _cts;
     private Task? _acceptLoop;
+    private string? _workflowKey;
 
     public string Name => "TCP";
     public bool IsRunning => _listener is not null;
@@ -21,6 +22,10 @@ public class TcpProtocolHandler(WorkflowEngine engine, ILogger<TcpProtocolHandle
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _listener = new TcpListener(IPAddress.Any, config.Port);
         _listener.Start();
+
+        // Capture any workflow override supplied by the protocol config
+        if (config.Options != null && config.Options.TryGetValue("Workflow", out var wf) && wf is not null)
+            _workflowKey = wf.ToString();
 
         logger.LogInformation("TCP listener started on port {Port}", config.Port);
         _acceptLoop = AcceptLoopAsync(_cts.Token);
@@ -84,7 +89,10 @@ public class TcpProtocolHandler(WorkflowEngine engine, ILogger<TcpProtocolHandle
                     ["RemoteEndpoint"] = client.Client.RemoteEndPoint?.ToString() ?? "unknown"
                 };
 
-                var results = await engine.ProcessAsync("TCP", ms.ToArray(), metadata, ct);
+                // Determine workflow key to use (override or remote endpoint)
+                var workflowKey = _workflowKey ?? metadata["RemoteEndpoint"]?.ToString() ?? string.Empty;
+
+                var results = await engine.ProcessAsync(workflowKey, ms.ToArray(), metadata, ct);
 
                 var allValid = results.TrueForAll(r => r.IsValid);
                 var response = allValid

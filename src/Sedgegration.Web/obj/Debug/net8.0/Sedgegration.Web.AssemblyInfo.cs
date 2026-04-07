@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Sedgegration.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+61379b655ee1e7ef745e268c2f9ef31676580336")]
 [assembly: System.Reflection.AssemblyProductAttribute("Sedgegration.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Sedgegration.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

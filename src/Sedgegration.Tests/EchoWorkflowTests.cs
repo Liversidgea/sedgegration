@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -44,7 +44,7 @@ public class EchoWorkflowTests
         var metadata = new Dictionary<string, object> { ["ContentType"] = "application/json" };
 
         // Act
-        var results = await engine.ProcessAsync("HTTP", payload, metadata, CancellationToken.None);
+        var results = await engine.ProcessAsync(wf.Id, payload, metadata, CancellationToken.None);
 
         // Assert
         Assert.Single(results);
@@ -64,6 +64,7 @@ internal class InMemoryWorkflowStore : IWorkflowStore
     public Task<IReadOnlyList<WorkflowDefinition>> GetAllAsync() => Task.FromResult<IReadOnlyList<WorkflowDefinition>>(_list.AsReadOnly());
     public Task<WorkflowDefinition?> GetAsync(string id) => Task.FromResult(_list.FirstOrDefault(w => w.Id == id));
     public Task<IReadOnlyList<WorkflowDefinition>> GetByProtocolAsync(string protocol) => Task.FromResult<IReadOnlyList<WorkflowDefinition>>(_list.Where(w => w.Protocol.Equals(protocol, StringComparison.OrdinalIgnoreCase)).ToList().AsReadOnly());
+    public Task<WorkflowDefinition?> GetByNameAsync(string name) => Task.FromResult(_list.FirstOrDefault(w => string.Equals(w.Name, name, StringComparison.OrdinalIgnoreCase)));
     public Task SaveAsync(WorkflowDefinition workflow)
     {
         var idx = _list.FindIndex(w => w.Id == workflow.Id);
@@ -72,4 +73,3 @@ internal class InMemoryWorkflowStore : IWorkflowStore
     }
     public Task DeleteAsync(string id) { _list.RemoveAll(w => w.Id == id); return Task.CompletedTask; }
 }
-

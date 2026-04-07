@@ -51,7 +51,7 @@ public class ProtocolManager
         _logger.LogInformation("Protocol {Protocol} unregistered", name);
     }
 
-    public async Task StartProtocolAsync(string name, ProtocolConfig config, CancellationToken ct = default)
+    public async Task StartProtocolAsync(string name, CancellationToken ct = default)
     {
         if (!_registry.TryGetValue(name, out var entry))
             throw new ArgumentException($"Unknown protocol: {name}");
@@ -59,10 +59,10 @@ public class ProtocolManager
         if (_active.ContainsKey(name))
             throw new InvalidOperationException($"Protocol {name} is already running");
 
-        // If this is an HTTP protocol, check for port+route conflicts
+        // Use the registered definition to determine effective port/route
         var type = entry.Definition.Type ?? string.Empty;
-        var effectiveRoute = string.IsNullOrWhiteSpace(config.Route) ? entry.Definition.Route : config.Route;
-        var effectivePort = config.Port != 0 ? config.Port : entry.Definition.Port;
+        var effectiveRoute = entry.Definition.Route;
+        var effectivePort = entry.Definition.Port;
         if (type.Equals("http", StringComparison.OrdinalIgnoreCase))
         {
             // See if any active endpoint is listening on same port+route
@@ -73,8 +73,19 @@ public class ProtocolManager
         }
 
         var handler = entry.Factory();
-        // Ensure the config passed to handler contains the effective values
-        var effectiveConfig = config with { Port = effectivePort, Route = effectiveRoute };
+        // Construct a ProtocolConfig from the definition defaults
+        var effectiveConfig = new ProtocolConfig
+        {
+            Protocol = name,
+            Port = effectivePort,
+            Route = effectiveRoute,
+            Options = new Dictionary<string, object>()
+        };
+
+        // If the registered definition specifies a workflow, pass it to the handler via options
+        if (!string.IsNullOrWhiteSpace(entry.Definition.Workflow))
+            effectiveConfig.Options["Workflow"] = entry.Definition.Workflow;
+
         await handler.StartAsync(effectiveConfig, ct);
         _active[name] = handler;
         _activeEndpoints[name] = (effectivePort, effectiveRoute);

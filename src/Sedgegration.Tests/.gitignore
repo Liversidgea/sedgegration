@@ -1,0 +1,24 @@
+﻿# Project-level gitignore for Sedgegration.Tests
+# Build outputs
+bin/
+obj/
+
+# Test results
+TestResults/
+*.trx
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.iml
+
+# Local settings
+local.settings.json
+
+# NuGet
+*.nupkg
+
+# Logs
+*.log
+

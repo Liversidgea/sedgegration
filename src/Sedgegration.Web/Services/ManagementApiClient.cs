@@ -104,10 +104,10 @@ public class ManagementApiClient(HttpClient http)
     }
 
     public async Task<ProtocolStatusResponse> StartProtocolAsync(
-        string name, ProtocolConfigForm config, CancellationToken ct = default)
+        string name, CancellationToken ct = default)
     {
-        var response = await http.PostAsJsonAsync(
-            $"/api/protocols/{Uri.EscapeDataString(name)}/start", config, ct);
+        var response = await http.PostAsync(
+            $"/api/protocols/{Uri.EscapeDataString(name)}/start", null, ct);
         if (!response.IsSuccessStatusCode)
         {
             string msg;

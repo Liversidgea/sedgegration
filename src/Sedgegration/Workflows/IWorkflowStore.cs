@@ -9,6 +9,7 @@ public interface IWorkflowStore
 {
     Task<IReadOnlyList<WorkflowDefinition>> GetAllAsync();
     Task<WorkflowDefinition?> GetAsync(string id);
+    Task<WorkflowDefinition?> GetByNameAsync(string name);
     Task<IReadOnlyList<WorkflowDefinition>> GetByProtocolAsync(string protocol);
     Task SaveAsync(WorkflowDefinition workflow);
     Task DeleteAsync(string id);

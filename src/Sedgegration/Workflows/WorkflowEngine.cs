@@ -7,7 +7,7 @@ namespace Sedgegration.Workflows;
 
 /// <summary>
 /// Compiles workflow definitions into live pipelines and dispatches incoming payloads
-/// to all matching, enabled workflows for a given protocol.
+/// to the workflow selected by path/id.
 /// </summary>
 public class WorkflowEngine(IWorkflowStore store, StepRegistry stepRegistry, ILoggerFactory loggerFactory)
 {
@@ -44,36 +44,40 @@ public class WorkflowEngine(IWorkflowStore store, StepRegistry stepRegistry, ILo
         => _activePipelines.TryRemove(workflowId, out _);
 
     /// <summary>
-    /// Processes incoming data through all enabled workflows for the given protocol.
+    /// Processes incoming data through a single workflow identified by path or id/name.
     /// </summary>
     public async Task<List<PayloadContext>> ProcessAsync(
-        string protocol, byte[] rawData, Dictionary<string, object> metadata, CancellationToken ct)
+        string workflowKey, byte[] rawData, Dictionary<string, object> metadata, CancellationToken ct)
     {
-        var workflows = await store.GetByProtocolAsync(protocol);
-        var results = new List<PayloadContext>();
-
-        foreach (var wf in workflows.Where(w => w.Enabled))
+        // Try to locate workflow by id first
+        var wf = await store.GetAsync(workflowKey);
+        if (wf is null)
         {
-            // Lazy-compile if not yet active
-            if (!_activePipelines.TryGetValue(wf.Id, out var pipeline))
-            {
-                pipeline = Compile(wf);
-                _activePipelines[wf.Id] = pipeline;
-            }
-
-            var context = new PayloadContext
-            {
-                ProtocolSource = protocol,
-                RawData = rawData,
-            };
-
-            foreach (var kv in metadata)
-                context.Metadata[kv.Key] = kv.Value;
-
-            results.Add(await pipeline.ExecuteAsync(context, ct));
+            // Fallback: try find by workflow Name using explicit store API
+            wf = await store.GetByNameAsync(workflowKey);
         }
 
-        return results;
+        if (wf is null || !wf.Enabled)
+            return new List<PayloadContext>();
+
+        // Lazy-compile if not yet active
+        if (!_activePipelines.TryGetValue(wf.Id, out var pipeline))
+        {
+            pipeline = Compile(wf);
+            _activePipelines[wf.Id] = pipeline;
+        }
+
+        var context = new PayloadContext
+        {
+            ProtocolSource = metadata.TryGetValue("Protocol", out var p) ? (p?.ToString() ?? string.Empty) : string.Empty,
+            RawData = rawData,
+        };
+
+        foreach (var kv in metadata)
+            context.Metadata[kv.Key] = kv.Value;
+
+        var result = await pipeline.ExecuteAsync(context, ct);
+        return new List<PayloadContext> { result };
     }
 
     /// <summary>

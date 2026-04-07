@@ -47,6 +47,9 @@ public class JsonWorkflowStore : IWorkflowStore
                 .ToList()
                 .AsReadOnly());
 
+    public Task<WorkflowDefinition?> GetByNameAsync(string name)
+        => Task.FromResult(_workflows.FirstOrDefault(w => string.Equals(w.Name, name, StringComparison.OrdinalIgnoreCase)));
+
     public async Task SaveAsync(WorkflowDefinition workflow)
     {
         await _lock.WaitAsync();

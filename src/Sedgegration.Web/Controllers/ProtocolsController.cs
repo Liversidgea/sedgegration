@@ -14,17 +14,18 @@ public class ProtocolsController(ManagementApiClient api) : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Start(ProtocolConfigForm config)
+    public async Task<IActionResult> Start(string protocol)
     {
-        if (!ModelState.IsValid)
+        if (string.IsNullOrWhiteSpace(protocol))
         {
+            ModelState.AddModelError(string.Empty, "Protocol name is required");
             var protocols = await api.GetProtocolsAsync();
             return View(nameof(Index), protocols);
         }
 
         try
         {
-            await api.StartProtocolAsync(config.Protocol, config);
+            await api.StartProtocolAsync(protocol);
             return RedirectToAction(nameof(Index));
         }
         catch (InvalidOperationException ex)

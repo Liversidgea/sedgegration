@@ -1,0 +1,28 @@
+﻿# Project-level gitignore for Sedgegration.Web
+# Build outputs
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.iml
+
+# Local settings
+local.settings.json
+
+# Logs
+*.log
+
+# NuGet
+*.nupkg
+
+# Others
+*.db
+*.sqlite
+

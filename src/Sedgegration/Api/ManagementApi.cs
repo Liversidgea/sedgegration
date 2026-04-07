@@ -151,15 +151,11 @@ public static class ManagementApi
             }));
 
         // Start a protocol
-        api.MapPost("/{name}/start", async (string name, ProtocolConfig config, ProtocolManager manager) =>
+        api.MapPost("/{name}/start", async (string name, ProtocolManager manager) =>
         {
             try
             {
-                // Validate route
-                if (!IsValidRoute(config.Route))
-                    return Results.BadRequest(new { error = "Invalid route. Routes must start with '/' and not contain spaces or '..'" });
-
-                await manager.StartProtocolAsync(name, config);
+                await manager.StartProtocolAsync(name);
                 return Results.Ok(new { status = "started", protocol = name });
             }
             catch (Exception ex)

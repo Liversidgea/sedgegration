@@ -127,3 +127,4 @@ c:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\refint\Sedgegration.
 c:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\Sedgegration.Tests.pdb
 c:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\Sedgegration.Tests.genruntimeconfig.cache
 c:\git\Sedgegration\src\Sedgegration.Tests\obj\Debug\net8.0\ref\Sedgegration.Tests.dll
+C:\git\Sedgegration\src\Sedgegration.Tests\bin\Debug\net8.0\Sedgegration.exe
