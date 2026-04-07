@@ -1,0 +1,43 @@
+@model ServiceStatusViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1>Sedgegration Management</h1>
+<p class="lead">Use the navigation above to manage workflows and protocols.</p>
+
+<div class="alert @(Model.IsOnline ? "alert-success" : "alert-danger") mt-3" role="alert">
+    <strong>Service Status:</strong>
+    @if (Model.IsOnline)
+    {
+        <span>Online</span>
+    }
+    else
+    {
+        <span>Offline</span>
+        @if (Model.ErrorMessage is not null)
+        {
+            <span class="ms-2 text-muted">&mdash; @Model.ErrorMessage</span>
+        }
+    }
+</div>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Workflows</h5>
+                <p class="card-text">Create, edit, enable/disable, and manage integration workflows.</p>
+                <a asp-controller="Workflows" asp-action="Index" class="btn btn-primary">Manage Workflows</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Protocols</h5>
+                <p class="card-text">View registered protocols and start or stop listeners.</p>
+                <a asp-controller="Protocols" asp-action="Index" class="btn btn-primary">Manage Protocols</a>
+            </div>
+        </div>
+    </div>
+</div>

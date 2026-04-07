@@ -1,0 +1,5 @@
+@model Sedgegration.Web.Models.ServiceStatusViewModel
+
+<span class="badge @(Model.IsOnline ? "bg-success" : "bg-danger")" title="@(Model.ErrorMessage ?? "")">
+    @(Model.IsOnline ? "Online" : "Offline")
+</span>

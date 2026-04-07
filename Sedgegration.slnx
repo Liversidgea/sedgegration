@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Sedgegration/Sedgegration.csproj" />
+    <Project Path="src/Sedgegration.Tests/Sedgegration.Tests.csproj" />
+    <Project Path="src/Sedgegration.Web/Sedgegration.Web.csproj" />
+  </Folder>
+</Solution>

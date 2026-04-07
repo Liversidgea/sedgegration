@@ -1,0 +1,59 @@
+@model IReadOnlyList<WorkflowViewModel>
+@{
+    ViewData["Title"] = "Workflows";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Workflows</h1>
+    <div>
+        <a asp-action="Create" class="btn btn-success">Create Workflow</a>
+        <form asp-action="Reload" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-secondary">Reload All</button>
+        </form>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No workflows found.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Protocol</th>
+                <th>Steps</th>
+                <th>Enabled</th>
+                <th>Updated</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wf in Model)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@wf.Id">@wf.Name</a></td>
+                    <td>@wf.Protocol</td>
+                    <td>@wf.Steps.Count</td>
+                    <td>
+                        <span class="badge @(wf.Enabled ? "bg-success" : "bg-secondary")">
+                            @(wf.Enabled ? "Yes" : "No")
+                        </span>
+                    </td>
+                    <td>@wf.UpdatedAt.ToString("g")</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@wf.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <form asp-action="Toggle" asp-route-id="@wf.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-warning">Toggle</button>
+                        </form>
+                        <a asp-action="Delete" asp-route-id="@wf.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

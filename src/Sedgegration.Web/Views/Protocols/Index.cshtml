@@ -1,0 +1,104 @@
+@model ProtocolListResponse
+@{
+    ViewData["Title"] = "Protocols";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Protocols</h1>
+    <a asp-action="Register" class="btn btn-success">Register Protocol</a>
+</div>
+
+@* Display model-level errors (e.g., invalid route or conflicts) *@
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var kv in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@kv.ErrorMessage</div>
+        }
+    </div>
+}
+
+<h4>Registered Protocols</h4>
+@if (!Model.Registered.Any())
+{
+    <p class="text-muted">No protocols registered.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Direction</th>
+                <th>Content Type</th>
+                <th>HTTP Verb</th>
+                <th>Route</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (var i = 0; i < Model.Registered.Count; i++)
+            {
+                var proto = Model.Registered[i];
+                var isActive = Model.Active.Contains(proto.Name);
+                // use index-only id to guarantee uniqueness
+                var safeId = "start-" + i;
+                <tr>
+                    <td>@proto.Name</td>
+                    <td>@proto.Type</td>
+                    <td>@proto.Direction</td>
+                    <td>@proto.ContentType</td>
+                    <td>@(string.IsNullOrEmpty(proto.HttpVerb) ? "—" : proto.HttpVerb)</td>
+                    <td>@(string.IsNullOrEmpty(proto.Route) ? "—" : proto.Route)</td>
+                    <td>
+                        <span class="badge @(isActive ? "bg-success" : "bg-secondary")">
+                            @(isActive ? "Active" : "Stopped")
+                        </span>
+                    </td>
+                    <td>
+                        @if (isActive)
+                        {
+                            <form asp-action="Stop" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="name" value="@proto.Name" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Stop</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-sm btn-outline-success"
+                                    data-bs-toggle="collapse" data-bs-target="#@safeId" aria-expanded="false" aria-controls="@safeId">
+                                Start
+                            </button>
+                            <form asp-action="Unregister" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="name" value="@proto.Name" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                        onclick="return confirm('Unregister protocol @proto.Name?')">
+                                    Unregister
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+                @if (!isActive)
+                {
+                    <tr id="@safeId" class="collapse">
+                        <td colspan="8">
+                            <form asp-action="Start" method="post" class="row g-2 align-items-end">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="config.Protocol" value="@proto.Name" />
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-success">Start Protocol</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}

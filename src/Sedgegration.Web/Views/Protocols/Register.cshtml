@@ -1,0 +1,95 @@
+@model RegisterProtocolForm
+@{
+    ViewData["Title"] = "Register Protocol";
+    var types = ViewBag.AvailableTypes as IReadOnlyList<string> ?? new List<string>();
+    var workflows = ViewBag.AvailableWorkflows as IReadOnlyList<WorkflowViewModel> ?? new List<WorkflowViewModel>();
+}
+
+<h1>Register Protocol</h1>
+
+<form asp-action="Register" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" placeholder="e.g. MyHTTP" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label">Handler Type</label>
+        <select asp-for="Type" class="form-select">
+            <option value="">-- Select type --</option>
+            @foreach (var t in types)
+            {
+                <option value="@t">@t</option>
+            }
+        </select>
+        <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Direction" class="form-label"></label>
+        <select asp-for="Direction" class="form-select">
+            <option value="">-- Select direction --</option>
+            <option value="Inbound">Inbound</option>
+            <option value="Outbound">Outbound</option>
+        </select>
+        <span asp-validation-for="Direction" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ContentType" class="form-label">Content Type</label>
+        <select asp-for="ContentType" class="form-select">
+            <option value="">-- Select content type --</option>
+            <option value="application/json">application/json</option>
+            <option value="text/xml">text/xml</option>
+            <option value="application/hl7-v2">application/hl7-v2</option>
+            <option value="application/octet-stream">application/octet-stream</option>
+        </select>
+        <span asp-validation-for="ContentType" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="HttpVerb" class="form-label">HTTP Verb</label>
+        <select asp-for="HttpVerb" class="form-select">
+            <option value="">-- Select verb --</option>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+            <option value="PATCH">PATCH</option>
+        </select>
+        <span asp-validation-for="HttpVerb" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Route" class="form-label">Endpoint Route</label>
+        <input asp-for="Route" class="form-control" placeholder="/ingest" />
+        <span asp-validation-for="Route" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Port" class="form-label">Port</label>
+        <input asp-for="Port" class="form-control" type="number" min="1" max="65535" />
+        <span asp-validation-for="Port" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Workflow" class="form-label">Bind to Workflow</label>
+        <select asp-for="Workflow" class="form-select">
+            <option value="">-- Select workflow --</option>
+            @foreach (var wf in workflows)
+            {
+                <option value="@wf.Id">@wf.Name</option>
+            }
+        </select>
+        <span asp-validation-for="Workflow" class="text-danger"></span>
+    </div>
+
+    <div>
+        <button type="submit" class="btn btn-success">Register</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>

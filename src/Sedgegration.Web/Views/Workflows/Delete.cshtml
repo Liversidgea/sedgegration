@@ -1,0 +1,27 @@
+@model WorkflowViewModel
+@{
+    ViewData["Title"] = "Delete Workflow";
+}
+
+<h1>Delete Workflow</h1>
+
+<div class="alert alert-danger">
+    Are you sure you want to delete the workflow <strong>@Model.Name</strong>?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">ID</dt>
+    <dd class="col-sm-9"><code>@Model.Id</code></dd>
+
+    <dt class="col-sm-3">Protocol</dt>
+    <dd class="col-sm-9">@Model.Protocol</dd>
+
+    <dt class="col-sm-3">Steps</dt>
+    <dd class="col-sm-9">@Model.Steps.Count</dd>
+</dl>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Confirm Delete</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>

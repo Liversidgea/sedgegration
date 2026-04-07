@@ -1,0 +1,85 @@
+@model CreateWorkflowForm
+@{
+    ViewData["Title"] = "Create Workflow";
+    var steps = ViewBag.AvailableSteps as IReadOnlyList<string> ?? new List<string>();
+}
+
+<h1>Create Workflow</h1>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Protocol" class="form-label"></label>
+        <input asp-for="Protocol" class="form-control" />
+        <span asp-validation-for="Protocol" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3 form-check">
+        <input asp-for="Enabled" class="form-check-input" />
+        <label asp-for="Enabled" class="form-check-label"></label>
+    </div>
+
+    <h4>Steps</h4>
+    <p class="text-muted">Available step types: @string.Join(", ", steps)</p>
+
+    <div id="steps-container">
+        @for (var i = 0; i < Model.Steps.Count; i++)
+        {
+            <div class="card mb-2 step-row">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Step Type</label>
+                            <select name="Steps[@i].StepType" class="form-select">
+                                @foreach (var s in steps)
+                                {
+                                    <option value="@s" selected="@(Model.Steps[i].StepType == s)">@s</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Order</label>
+                            <input name="Steps[@i].Order" type="number" class="form-control"
+                                   value="@(Model.Steps[i].Order ?? i)" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addStep()">+ Add Step</button>
+
+    <div>
+        <button type="submit" class="btn btn-success">Create</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+</form>
+
+<script>
+    var stepIndex = @Model.Steps.Count;
+    var stepTypes = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(steps));
+
+    function addStep() {
+        var container = document.getElementById('steps-container');
+        var options = stepTypes.map(function(s) {
+            return '<option value="' + s + '">' + s + '</option>';
+        }).join('');
+        var html = '<div class="card mb-2 step-row"><div class="card-body"><div class="row">'
+            + '<div class="col-md-4"><label class="form-label">Step Type</label>'
+            + '<select name="Steps[' + stepIndex + '].StepType" class="form-select">' + options + '</select></div>'
+            + '<div class="col-md-2"><label class="form-label">Order</label>'
+            + '<input name="Steps[' + stepIndex + '].Order" type="number" class="form-control" value="' + stepIndex + '" /></div>'
+            + '</div></div></div>';
+        container.insertAdjacentHTML('beforeend', html);
+        stepIndex++;
+    }
+</script>
