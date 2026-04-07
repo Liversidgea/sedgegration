@@ -49,7 +49,7 @@ Thumbs.db
 .idea/
 *.sln.iml
 
-# Resharper
+# Resharper 
 _ReSharper*/
 *.ReSharper*
 
